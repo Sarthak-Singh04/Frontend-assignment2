@@ -1,113 +1,168 @@
-import Image from 'next/image'
+"use client"
+import React, { useState } from 'react';
+import DummyData from '@/DummyData';
+import ProductCard from '@/components/ProductCard';
 
-export default function Home() {
+function Home() {
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedGPUs, setSelectedGPUs] = useState(new Set());
+  const [selectedOS, setSelectedOS] = useState(new Set());
+  const [selectedGPUCores, setSelectedGPUCores] = useState(new Set());
+
+  const uniqueOSNames = new Set(DummyData.flatMap(data => data.os.map(osData => osData.name)));
+  const GpuCount = new Set(DummyData.flatMap(data => data.os.filter(osData => osData.gpuCount > 0).map(osData => osData.gpuCount)));
+
+  const handleProductClick = (productId) => {
+    setSelectedProduct(productId);
+  };
+
+  const handleGPUCheckboxChange = (event) => {
+    const gpuName = event.target.value;
+    if (selectedGPUs.has(gpuName)) {
+      selectedGPUs.delete(gpuName);
+    } else {
+      selectedGPUs.add(gpuName);
+    }
+    setSelectedGPUs(new Set(selectedGPUs));
+    setSelectedProduct(null);
+  };
+
+  const handleOSCheckboxChange = (event) => {
+    const osName = event.target.value;
+    if (selectedOS.has(osName)) {
+      selectedOS.delete(osName);
+    } else {
+      selectedOS.add(osName);
+    }
+    setSelectedOS(new Set(selectedOS));
+    setSelectedProduct(null);
+  };
+
+  const handleGPUCoreCheckboxChange = (event) => {
+    const gpuCoreCount = parseInt(event.target.value);
+    if (selectedGPUCores.has(gpuCoreCount)) {
+      selectedGPUCores.delete(gpuCoreCount);
+    } else {
+      selectedGPUCores.add(gpuCoreCount);
+    }
+    setSelectedGPUCores(new Set(selectedGPUCores));
+    setSelectedProduct(null);
+  };
+
+  const filterProducts = () => {
+    if (selectedProduct) {
+      return DummyData.filter((data) => data.id === selectedProduct);
+    } else {
+      return DummyData.filter((data) => {
+        const hasSelectedGPU = selectedGPUs.size === 0 || selectedGPUs.has(data.gpuName);
+        const hasSelectedOS = selectedOS.size === 0 || data.os.some((osData) => selectedOS.has(osData.name));
+        const hasSelectedGPUCore = selectedGPUCores.size === 0 || data.os.some((osData) => selectedGPUCores.has(osData.gpuCount));
+        const hasSelectedCPU = selectedOS.size === 0 || data.os.some((osData) => {
+          if (selectedOS.has(osData.name)) {
+            return selectedGPUs.size === 0 || selectedGPUs.has(data.gpuName);
+          }
+          return false;
+        });
+
+        return hasSelectedGPU && hasSelectedOS && hasSelectedGPUCore && hasSelectedCPU;
+      });
+    }
+  };
+
+  const filteredProducts = filterProducts();
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+    <div className="flex w-full min-h-screen bg-gray-200">
+      <div className="flex overflow-auto h-full">
+        <aside className="w-[300px] h-full overflow-y-auto overflow-x-hidden bg-white shadow-lg p-4">
+          <h3 className="mb-4 ml-2 text-xl text-gray-800 font-semibold">Graphics Card</h3>
+          {DummyData.map((data) => (
+            <div key={data.id} className="flex items-center mb-2">
+              <input
+                id={`checkbox-${data.id}`}
+                type="checkbox"
+                className="w-4 h-4 text-blue-500 bg-gray-300 rounded-full focus:ring-blue-500 transition duration-300 ease-in-out"
+                value={data.gpuName}
+                checked={selectedGPUs.has(data.gpuName)}
+                onChange={handleGPUCheckboxChange}
+              />
+              <label
+                htmlFor={`checkbox-${data.id}`}
+                className="ml-2 text-sm text-gray-800 cursor-pointer transition duration-300 ease-in-out hover:text-blue-500"
+              >
+                {data.gpuName}
+              </label>
+            </div>
+          ))}
+
+          <h3 className="mb-4 ml-2 mt-6 text-xl text-gray-800 font-semibold">System</h3>
+          {Array.from(uniqueOSNames).map((name, index) => (
+            <div key={index} className="flex items-center mb-2">
+              <input
+                id={`checkbox-system-${index}`}
+                type="checkbox"
+                className="w-4 h-4 text-blue-500 bg-gray-300 rounded-full focus:ring-blue-500 transition duration-300 ease-in-out"
+                value={name}
+                checked={selectedOS.has(name)}
+                onChange={handleOSCheckboxChange}
+              />
+              <label
+                htmlFor={`checkbox-system-${index}`}
+                className="ml-2 text-sm text-gray-800 cursor-pointer transition duration-300 ease-in-out hover:text-blue-500"
+              >
+                {name}
+              </label>
+            </div>
+          ))}
+
+          <h3 className="mb-4 ml-2 mt-6 text-xl text-gray-800 font-semibold">GpuCount</h3>
+          {Array.from(GpuCount).map((count, index) => {
+            if (count > 0) {
+              return (
+                <div key={index} className="flex items-center mb-2">
+                  <input
+                    id={`checkbox-gpu-${index}`}
+                    type="checkbox"
+                    className="w-4 h-4 text-blue-500 bg-gray-300 rounded-full focus:ring-blue-500 transition duration-300 ease-in-out"
+                    value={count}
+                    checked={selectedGPUCores.has(count)}
+                    onChange={handleGPUCoreCheckboxChange}
+                  />
+                  <label
+                    htmlFor={`checkbox-gpu-${index}`}
+                    className="ml-2 text-sm text-gray-800 cursor-pointer transition duration-300 ease-in-out hover:text-blue-500"
+                  >
+                    {count}
+                  </label>
+                </div>
+              );
+            }
+            return null;
+          })}
+        </aside>
+
+        <main className="flex-grow p-2">
+          {filteredProducts.map((data) => (
+            <ProductCard
+              key={data.id}
+              gpuName={data.gpuName}
+              osName={data.os[0].name}
+              gpuCount={data.os[0].gpuCount}
+              gpuRAM={data.os[0].gpuRAM}
+              cpu={data.os[0].cpu}
+              cpuPerGPU={data.os[0].cpuPerGPU}
+              ramPerGPU={data.os[0].ramPerGPU}
+              systemDisk={data.os[0].systemDisk}
+              dataDisk={data.os[0].dataDisk}
+              bandwidth={data.os[0].bandwidth}
+              pricing={data.os[0].pricing}
+              onClick={() => handleProductClick(data.id)}
             />
-          </a>
-        </div>
+          ))}
+        </main>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
+
+export default Home;
