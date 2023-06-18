@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 function ProductCard({ gpuName, osName, gpuCount, gpuRAM, cpu, cpuPerGPU, ramPerGPU, systemDisk, dataDisk, bandwidth, pricing }) {
     return (
       <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-md shadow-md p-4 w-[1200px] mb-4 transform transition-all duration-300">
@@ -46,9 +48,13 @@ function ProductCard({ gpuName, osName, gpuCount, gpuRAM, cpu, cpuPerGPU, ramPer
             <span className="font-semibold">Up:</span> {pricing.up}
           </div>
         </div>
+        <Link href="/purchase">
         <button className="mt-6 py-2 px-4 bg-purple-600 text-white font-semibold rounded-md transition-all duration-300 hover:bg-purple-900">
           Buy Now
         </button>
+
+        </Link>
+       
       </div>
     );
   }
